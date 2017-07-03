@@ -37,13 +37,28 @@ public class Client : MonoBehaviour {
     private void registerHandler()
     {
         myClient.RegisterHandler(MsgType.Connect, __onConn);
+        myClient.RegisterHandler(MsgType.Disconnect, __onDisconn);
     }
 
     void Update()
     {
         if(Input.GetKeyDown(KeyCode.S))
         {
-            Notify_T n = new Notify_T ();
+            myClient.Disconnect();
+            ConnectionConfig conf = new ConnectionConfig();
+            conf.AddChannel(QosType.Reliable);
+            conf.AddChannel(QosType.Unreliable);
+            myClient = new NetworkClient();
+            myClient.Configure(conf, 2);
+
+            myClient.Connect(IPAdress, 1000);
+
+            Debug.Log("Send connect");
+        }
+
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            Notify_T n = new Notify_T();
             n.s = "Liu";
             conn.Send(MessageType_Client.T, n);
 
@@ -55,5 +70,10 @@ public class Client : MonoBehaviour {
     {
         conn = myClient.connection;
         Debug.Log("connected successful");
+    }
+
+    private void __onDisconn(NetworkMessage msg)
+    {
+        Debug.Log("disconnected");
     }
 }

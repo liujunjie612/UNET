@@ -1,2 +1,10 @@
 /Client/Library
 /Server/Library
+/Server/Server.CSharp.csproj
+/Server/Server.sln
+/Server/Server.v12.suo
+/Server/Temp
+/Client/Client.CSharp.csproj
+/Client/Client.sln
+/Client/Client.v12.suo
+/Client/Temp
