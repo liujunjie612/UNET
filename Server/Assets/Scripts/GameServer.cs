@@ -88,6 +88,11 @@ public class GameServer : MonoBehaviour {
 
     private void __onDisconn(NetworkMessage msg)
     {
+        //玩家下线通知MasterServer，更新GameServer人数
+        PlayerOfflineNotify notify = new PlayerOfflineNotify();
+        notify.playerConnId = msg.conn.connectionId;
+        myClient.Send(MessageType_GameServer.PlayerOfflineNotify, notify);
+
         Log.Instance.Info("玩家：" + msg.conn + "下线");
     }
 

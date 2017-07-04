@@ -39,4 +39,14 @@ namespace Message_GameServer
             port = reader.ReadInt32();
         }
     }
+
+    public class PlayerOfflineNotify: MessageBase
+    {
+        public int playerConnId;
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(playerConnId);
+        }
+    }
 }

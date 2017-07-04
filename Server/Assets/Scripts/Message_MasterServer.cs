@@ -48,4 +48,14 @@ namespace Message_MasterServer
             writer.Write(port);
         }
     }
+
+    public class PlayerOfflineNotify: MessageBase
+    {
+        public int playerConnId;
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            playerConnId = reader.ReadInt32();
+        }
+    }
 }

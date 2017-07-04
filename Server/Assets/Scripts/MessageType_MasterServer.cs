@@ -10,4 +10,6 @@ public class MessageType_MasterServer
 
     public const short MasterServerRsp = 102;
     public const short GameServerNotify = 103;
+
+    public const short PlayerOfflineNotify = 104;
 }

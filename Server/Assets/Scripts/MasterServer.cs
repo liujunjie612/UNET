@@ -49,6 +49,7 @@ public class MasterServer : MonoBehaviour
 
             NetworkServer.RegisterHandler(MessageType_MasterServer.T, __onT);
             NetworkServer.RegisterHandler(MessageType_MasterServer.MasterServerRsp, __onMasterServerRsp);
+            NetworkServer.RegisterHandler(MessageType_MasterServer.PlayerOfflineNotify, __onPlayerOfflineNotify);
         }
         Log.Instance.Info("服务器已开启");
     }
@@ -129,6 +130,16 @@ public class MasterServer : MonoBehaviour
             v.port = notify.port;
             v.playerCount = 0;
             _gameServerPlayersDic.Add(msg.conn.connectionId, v);
+        }
+    }
+
+    private void __onPlayerOfflineNotify(NetworkMessage msg)
+    {
+        PlayerOfflineNotify notify = msg.ReadMessage<PlayerOfflineNotify>();
+
+        if(_gameServerPlayersDic.ContainsKey(msg.conn.connectionId))
+        {
+            _gameServerPlayersDic[msg.conn.connectionId].playerCount--;
         }
     }
 }
