@@ -42,16 +42,9 @@ public class Client : MonoBehaviour {
 
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.S))
+        if(Input.GetKeyDown(KeyCode.C))
         {
-            myClient.Disconnect();
-            ConnectionConfig conf = new ConnectionConfig();
-            conf.AddChannel(QosType.Reliable);
-            conf.AddChannel(QosType.Unreliable);
-            myClient = new NetworkClient();
-            myClient.Configure(conf, 2);
-
-            myClient.Connect(IPAdress, 1000);
+            myClient.ReconnectToNewHost(IPAdress, 1000);
 
             Debug.Log("Send connect");
         }
