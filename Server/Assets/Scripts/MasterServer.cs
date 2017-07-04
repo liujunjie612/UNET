@@ -16,6 +16,7 @@ public class MasterServer : MonoBehaviour
     private int _port = 3000;
 
     private List<NetworkConnection> _gameServerList = new List<NetworkConnection>();
+    private Dictionary<int, GameServerVo> _gameServerPlayersDic = new Dictionary<int, GameServerVo>();
 
     void Start()
     {
@@ -96,15 +97,38 @@ public class MasterServer : MonoBehaviour
         Log.Instance.Info("type:" + rsp.type);
         if (rsp.type == 0)
         {
-            clientConnenctToGameServer(msg.conn, "127.0.0.1", 1000);
+            int p = -1;
+            for (int i = 0; i < _gameServerList.Count; i++)
+            {
+                if (_gameServerPlayersDic[(_gameServerList[i].connectionId)].playerCount < 2)
+                {
+                    p = _gameServerPlayersDic[(_gameServerList[i].connectionId)].port;
+                    _gameServerPlayersDic[(_gameServerList[i].connectionId)].playerCount++;
+                    break;
+                }
+            }
+
+            if(p == -1)
+            {
+                //这是服务器满员了，需要创建新的服务器
+                Log.Instance.Info("所有服务器满员了，需要创建新的服务器");
+                return;
+            }
+            clientConnenctToGameServer(msg.conn, "127.0.0.1", p);
         }
         else
         {
             GameServerNotify notify = new GameServerNotify();
             notify.maxConnection = 100;
-            notify.port = 1000;
+            notify.port = _gameServerList.Count + 1000;
 
             NetworkServer.SendToClient(msg.conn.connectionId, MessageType_MasterServer.GameServerNotify, notify);
+
+            _gameServerList.Add(msg.conn);
+            GameServerVo v = new GameServerVo ();
+            v.port = notify.port;
+            v.playerCount = 0;
+            _gameServerPlayersDic.Add(msg.conn.connectionId, v);
         }
     }
 }
