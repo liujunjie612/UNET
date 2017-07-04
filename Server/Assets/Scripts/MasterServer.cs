@@ -1,4 +1,4 @@
-﻿using Message_Server;
+﻿using Message_MasterServer;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +14,8 @@ public class MasterServer : MonoBehaviour
 
     private int _maxConnection = 100;
     private int _port = 3000;
+
+    private List<NetworkConnection> _gameServerList = new List<NetworkConnection>();
 
     void Start()
     {
@@ -44,8 +46,10 @@ public class MasterServer : MonoBehaviour
             NetworkServer.RegisterHandler(MsgType.Connect, __onConn);
             NetworkServer.RegisterHandler(MsgType.Disconnect, __onDisconn);
 
-            NetworkServer.RegisterHandler(MessageType_Server.T, __onT);
+            NetworkServer.RegisterHandler(MessageType_MasterServer.T, __onT);
+            NetworkServer.RegisterHandler(MessageType_MasterServer.MasterServerRsp, __onMasterServerRsp);
         }
+        Log.Instance.Info("服务器已开启");
     }
 
     private void __onMaxConnectionInputChanged(string input)
@@ -56,6 +60,15 @@ public class MasterServer : MonoBehaviour
     private void __onPortInputChanged(string input)
     {
         _port = int.Parse(input);
+    }
+
+    private void clientConnenctToGameServer(NetworkConnection cnn, string ipAdress, int port)
+    {
+        ConnectionGameServerNotify notify = new ConnectionGameServerNotify();
+        notify.ipAdress = ipAdress;
+        notify.port = port;
+
+        NetworkServer.SendToClient(cnn.connectionId, MessageType_MasterServer.ConnectionGameServerNotify, notify);
     }
 
     private void __onConn(NetworkMessage msg)
@@ -74,5 +87,24 @@ public class MasterServer : MonoBehaviour
         Notify_T n = msg.ReadMessage<Notify_T>();
 
         Log.Instance.Info("Receive：" + n.s);
+    }
+
+    private void __onMasterServerRsp(NetworkMessage msg)
+    {
+        MasterServerRsp rsp = msg.ReadMessage<MasterServerRsp>();
+
+        Log.Instance.Info("type:" + rsp.type);
+        if (rsp.type == 0)
+        {
+            clientConnenctToGameServer(msg.conn, "127.0.0.1", 1000);
+        }
+        else
+        {
+            GameServerNotify notify = new GameServerNotify();
+            notify.maxConnection = 100;
+            notify.port = 1000;
+
+            NetworkServer.SendToClient(msg.conn.connectionId, MessageType_MasterServer.GameServerNotify, notify);
+        }
     }
 }

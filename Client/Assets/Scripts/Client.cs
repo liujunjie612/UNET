@@ -38,17 +38,12 @@ public class Client : MonoBehaviour {
     {
         myClient.RegisterHandler(MsgType.Connect, __onConn);
         myClient.RegisterHandler(MsgType.Disconnect, __onDisconn);
+
+        myClient.RegisterHandler(MessageType_Client.ConnectToGameServer, __onConnectionToGameServer);
     }
 
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.C))
-        {
-            myClient.ReconnectToNewHost(IPAdress, 1000);
-
-            Debug.Log("Send connect");
-        }
-
         if (Input.GetKeyDown(KeyCode.D))
         {
             Notify_T n = new Notify_T();
@@ -63,10 +58,24 @@ public class Client : MonoBehaviour {
     {
         conn = myClient.connection;
         Debug.Log("connected successful");
+
+        MasterServerRsp rsp = new MasterServerRsp();
+        myClient.Send(MessageType_Client.MasterServerRsp, rsp);
+        Debug.Log("send MasterServerRsp");
+        
     }
 
     private void __onDisconn(NetworkMessage msg)
     {
         Debug.Log("disconnected");
+    }
+
+    private void __onConnectionToGameServer(NetworkMessage msg)
+    {
+        ConnectionToGameServerRsp rsp = msg.ReadMessage<ConnectionToGameServerRsp>();
+
+        myClient.ReconnectToNewHost(rsp.ipAdress, rsp.port);
+
+        Debug.Log("切换到GameServer:" + rsp.ipAdress + "  " + rsp.port);
     }
 }

@@ -8,3 +8,7 @@
 /Client/Client.sln
 /Client/Client.v12.suo
 /Client/Temp
+/Server/GameServer_Data
+/Server/GameServer.exe
+/Client/Client.exe
+/Client/Client_Data

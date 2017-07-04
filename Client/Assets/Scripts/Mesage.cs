@@ -14,4 +14,26 @@ namespace Message_Client
             writer.Write(s);
         }
     }
+
+    public class ConnectionToGameServerRsp: MessageBase
+    {
+        public string ipAdress;
+        public int port;
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            ipAdress = reader.ReadString();
+            port = reader.ReadInt32(); 
+        }
+    }
+
+    public class MasterServerRsp: MessageBase
+    {
+        private int type = 0;
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(type);
+        }
+    }
 }
