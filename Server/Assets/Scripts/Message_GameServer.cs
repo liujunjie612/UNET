@@ -26,6 +26,11 @@ namespace Message_GameServer
         {
             s = reader.ReadString();
         }
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(s);
+        }
     }
 
     public class GameServerNotify: MessageBase

@@ -45,6 +45,7 @@ public class Client : MonoBehaviour {
         myClient.RegisterHandler(MsgType.Disconnect, __onDisconn);
 
         myClient.RegisterHandler(MessageType_Client.ConnectToGameServer, __onConnectionToGameServer);
+        myClient.RegisterHandler(MessageType_Client.T, __onT);
     }
 
     void Update()
@@ -85,5 +86,12 @@ public class Client : MonoBehaviour {
         myClient.ReconnectToNewHost(rsp.ipAdress, rsp.port);
 
         Log.Instance.Info("切换到GameServer:" + rsp.ipAdress + "  " + rsp.port);
+    }
+
+    private void __onT(NetworkMessage msg)
+    {
+        Notify_T notify = msg.ReadMessage<Notify_T>();
+
+        Log.Instance.Info("Receive：" + notify.s);
     }
 }

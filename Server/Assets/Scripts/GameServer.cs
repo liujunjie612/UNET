@@ -116,7 +116,12 @@ public class GameServer : MonoBehaviour {
     {
         Notify_T n = msg.ReadMessage<Notify_T>();
 
-        Log.Instance.Info("Receive：" + n.s);
+        Log.Instance.Info("Receive From" + msg.conn.connectionId + "：" + n.s);
+
+        Notify_T t = new Notify_T();
+        t.s = "junjie cool";
+        NetworkServer.SendToClient(msg.conn.connectionId, MessageType_GameServer.T, t);
+        Log.Instance.Info("send to " + msg.conn.connectionId + " :" + t.s);
     }
 
     /// <summary>

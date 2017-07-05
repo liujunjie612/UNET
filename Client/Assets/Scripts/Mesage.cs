@@ -13,6 +13,11 @@ namespace Message_Client
         {
             writer.Write(s);
         }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            s = reader.ReadString();
+        }
     }
 
     public class ConnectionToGameServerRsp: MessageBase
