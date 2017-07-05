@@ -15,6 +15,11 @@ public class MasterServer : MonoBehaviour
     private int _maxConnection = 100;
     private int _port = 3000;
 
+    private bool _onOpeningGameServer = false;
+    private bool _onHandling = false;
+    private List<NetworkMessage> _catchMsgList = new List<NetworkMessage>();
+    private List<NetworkMessage> _handleMsgList = new List<NetworkMessage>();
+
     private List<NetworkConnection> _gameServerList = new List<NetworkConnection>();
     private Dictionary<int, GameServerVo> _gameServerPlayersDic = new Dictionary<int, GameServerVo>();
 
@@ -47,11 +52,12 @@ public class MasterServer : MonoBehaviour
             NetworkServer.RegisterHandler(MsgType.Connect, __onConn);
             NetworkServer.RegisterHandler(MsgType.Disconnect, __onDisconn);
 
-            NetworkServer.RegisterHandler(MessageType_MasterServer.T, __onT);
             NetworkServer.RegisterHandler(MessageType_MasterServer.MasterServerRsp, __onMasterServerRsp);
             NetworkServer.RegisterHandler(MessageType_MasterServer.PlayerOfflineNotify, __onPlayerOfflineNotify);
+            NetworkServer.RegisterHandler(MessageType_MasterServer.GameServerOpenedNotify, __onGameServerOpenedNotify);
         }
         Log.Instance.Info("服务器已开启");
+                
     }
 
     private void __onMaxConnectionInputChanged(string input)
@@ -73,49 +79,82 @@ public class MasterServer : MonoBehaviour
         NetworkServer.SendToClient(cnn.connectionId, MessageType_MasterServer.ConnectionGameServerNotify, notify);
     }
 
+    IEnumerator handleCatchMsgList()
+    {
+        Log.Instance.Info(_handleMsgList.Count + "  " + _catchMsgList.Count);
+        _onHandling = true;
+        _onOpeningGameServer = false;
+        _handleMsgList = _catchMsgList;
+        _catchMsgList = new List<NetworkMessage>();
+        Log.Instance.Info(_handleMsgList.Count + "  " + _catchMsgList.Count);
+        while(_handleMsgList.Count > 0)
+        {
+            if(_onOpeningGameServer)
+            {
+                for(int i =0;i<_handleMsgList.Count;i++)
+                {
+                    _catchMsgList.Add(_handleMsgList[i]);
+                }
+                _onHandling = false;
+                yield break;
+            }
+
+            yield return 0;
+            sendClient(_handleMsgList[0]);
+            _handleMsgList.RemoveAt(0);
+        }
+
+        _onHandling = false;
+    }
+
     private void __onConn(NetworkMessage msg)
     {
         NetworkServer.SetClientReady(msg.conn);
-        Log.Instance.Info("玩家：" + msg.conn + "上线");
+        Log.Instance.Info(msg.conn + " 连接");
     }
 
     private void __onDisconn(NetworkMessage msg)
     {
-        Log.Instance.Info("玩家：" + msg.conn + "下线");
-    }
+        bool server = false;
+        for (int i = 0; i < _gameServerList.Count;i++ )
+        {
+            if(_gameServerList[i].connectionId == msg.conn.connectionId)
+            {
+                server = true;
+                _gameServerList.RemoveAt(i);
+                break;
+            }
+        }
 
-    private void __onT(NetworkMessage msg)
-    {
-        Notify_T n = msg.ReadMessage<Notify_T>();
-
-        Log.Instance.Info("Receive：" + n.s);
+        if (server)
+        {
+            _gameServerPlayersDic.Remove(msg.conn.connectionId);
+            Log.Instance.Info("服务器关闭了：" + msg.conn.connectionId);
+        }
+        else
+        {
+            Log.Instance.Info("玩家：" + msg.conn + "下线");
+        }
     }
 
     private void __onMasterServerRsp(NetworkMessage msg)
     {
         MasterServerRsp rsp = msg.ReadMessage<MasterServerRsp>();
 
-        Log.Instance.Info("type:" + rsp.type);
+        if (rsp.type == 0)
+            Log.Instance.Info("玩家连线 type:" + rsp.type);
+        else
+            Log.Instance.Info("服务器连线 type：" + rsp.type);
+
         if (rsp.type == 0)
         {
-            int p = -1;
-            for (int i = 0; i < _gameServerList.Count; i++)
+            if(_onOpeningGameServer || _onHandling)
             {
-                if (_gameServerPlayersDic[(_gameServerList[i].connectionId)].playerCount < 2)
-                {
-                    p = _gameServerPlayersDic[(_gameServerList[i].connectionId)].port;
-                    _gameServerPlayersDic[(_gameServerList[i].connectionId)].playerCount++;
-                    break;
-                }
-            }
-
-            if(p == -1)
-            {
-                //这是服务器满员了，需要创建新的服务器
-                Log.Instance.Info("所有服务器满员了，需要创建新的服务器");
+                _catchMsgList.Add(msg);
                 return;
             }
-            clientConnenctToGameServer(msg.conn, "127.0.0.1", p);
+
+            sendClient(msg);
         }
         else
         {
@@ -125,12 +164,40 @@ public class MasterServer : MonoBehaviour
 
             NetworkServer.SendToClient(msg.conn.connectionId, MessageType_MasterServer.GameServerNotify, notify);
 
+            Log.Instance.Info("开启服务器端口 port：" + notify.port);
+
             _gameServerList.Add(msg.conn);
             GameServerVo v = new GameServerVo ();
             v.port = notify.port;
             v.playerCount = 0;
             _gameServerPlayersDic.Add(msg.conn.connectionId, v);
         }
+    }
+
+    private void sendClient(NetworkMessage msg)
+    {
+        int p = -1;
+        for (int i = 0; i < _gameServerList.Count; i++)
+        {
+            if (_gameServerPlayersDic[(_gameServerList[i].connectionId)].playerCount < 2)
+            {
+                p = _gameServerPlayersDic[(_gameServerList[i].connectionId)].port;
+                _gameServerPlayersDic[(_gameServerList[i].connectionId)].playerCount++;
+                break;
+            }
+        }
+
+        if (p == -1)
+        {
+            //这是服务器满员了，需要创建新的服务器
+            Log.Instance.Info("所有服务器满员了，需要创建新的服务器");
+            Application.OpenURL(@"E:\UNET\Server\GameServer.exe");
+            _onOpeningGameServer = true;
+            _catchMsgList.Add(msg);
+            return;
+        }
+        clientConnenctToGameServer(msg.conn, "127.0.0.1", p);
+        Log.Instance.Info("玩家连接到 port：" + p);
     }
 
     private void __onPlayerOfflineNotify(NetworkMessage msg)
@@ -141,5 +208,12 @@ public class MasterServer : MonoBehaviour
         {
             _gameServerPlayersDic[msg.conn.connectionId].playerCount--;
         }
+    }
+
+    private void __onGameServerOpenedNotify(NetworkMessage msg)
+    {
+        GameServerOpenedNotify notify = msg.ReadMessage<GameServerOpenedNotify>();
+        Log.Instance.Info("服务器已开启通知");
+        StartCoroutine("handleCatchMsgList");
     }
 }

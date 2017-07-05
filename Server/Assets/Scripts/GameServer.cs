@@ -13,6 +13,8 @@ public class GameServer : MonoBehaviour {
     private string IPAdress = "127.0.0.1";
     private int Port = 3000;
 
+    private int _playerCount = 0;
+
     void Start()
     {
         connect();
@@ -67,6 +69,10 @@ public class GameServer : MonoBehaviour {
             NetworkServer.RegisterHandler(MessageType_GameServer.T, __onT);
         }
         Log.Instance.Info("服务器已开启");
+
+        GameServerOpenedNotify n = new GameServerOpenedNotify();
+        myClient.Send(MessageType_GameServer.GameServerOpenedNotify, n);
+        Log.Instance.Info("发送服务器已开启通知");
     }
 
     private void __onMasterConn(NetworkMessage msg)
@@ -83,6 +89,7 @@ public class GameServer : MonoBehaviour {
     private void __onConn(NetworkMessage msg)
     {
         NetworkServer.SetClientReady(msg.conn);
+        _playerCount++;
         Log.Instance.Info("玩家：" + msg.conn + "上线");
     }
 
@@ -92,8 +99,12 @@ public class GameServer : MonoBehaviour {
         PlayerOfflineNotify notify = new PlayerOfflineNotify();
         notify.playerConnId = msg.conn.connectionId;
         myClient.Send(MessageType_GameServer.PlayerOfflineNotify, notify);
+        _playerCount--;
 
-        Log.Instance.Info("玩家：" + msg.conn + "下线");
+        Log.Instance.Info("玩家：" + msg.conn + "下线，剩余在线玩家数：" + _playerCount);
+
+        if (_playerCount <= 0)
+            StartCoroutine("shutDown");
     }
 
     private void __onMasterServerRsp(NetworkMessage msg)
@@ -106,5 +117,17 @@ public class GameServer : MonoBehaviour {
         Notify_T n = msg.ReadMessage<Notify_T>();
 
         Log.Instance.Info("Receive：" + n.s);
+    }
+
+    /// <summary>
+    /// 服务器所连的客户端为0时，断开连接
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator shutDown()
+    {
+        yield return new WaitForSeconds(10);
+
+        if (_playerCount <= 0)
+            Application.Quit();
     }
 }

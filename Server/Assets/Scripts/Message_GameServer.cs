@@ -49,4 +49,14 @@ namespace Message_GameServer
             writer.Write(playerConnId);
         }
     }
+
+    public class GameServerOpenedNotify: MessageBase
+    {
+        private bool opened = true;
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(opened);
+        }
+    }
 }

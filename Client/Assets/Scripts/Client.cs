@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 public class Client : MonoBehaviour {
+    public GameObject loadingImg;
 
     public static NetworkConnection conn;
 
@@ -13,8 +14,12 @@ public class Client : MonoBehaviour {
     private string IPAdress = "127.0.0.1";
     private int Port = 3000;
 
+    private int _connectTimes = 0;
+
     void Start()
     {
+        loadingImg.SetActive(true);
+
         connect();
 
         registerHandler();
@@ -31,7 +36,7 @@ public class Client : MonoBehaviour {
 
         myClient.Connect(IPAdress, Port);
 
-        Debug.Log("Send connect");
+        Log.Instance.Info("Send connect");
     }
 
     private void registerHandler()
@@ -50,24 +55,27 @@ public class Client : MonoBehaviour {
             n.s = "Liu";
             conn.Send(MessageType_Client.T, n);
 
-            Debug.Log("send Liu");
+            Log.Instance.Info("send Liu");
         }
     }
 
     private void __onConn(NetworkMessage msg)
     {
         conn = myClient.connection;
-        Debug.Log("connected successful");
+        Log.Instance.Info("connected successful");
 
         MasterServerRsp rsp = new MasterServerRsp();
         myClient.Send(MessageType_Client.MasterServerRsp, rsp);
-        Debug.Log("send MasterServerRsp");
-        
+        Log.Instance.Info("send MasterServerRsp");
+
+        _connectTimes++;
+        if (_connectTimes > 1)
+            loadingImg.SetActive(false);
     }
 
     private void __onDisconn(NetworkMessage msg)
     {
-        Debug.Log("disconnected");
+        Log.Instance.Info("send disconnected");
     }
 
     private void __onConnectionToGameServer(NetworkMessage msg)
@@ -76,6 +84,6 @@ public class Client : MonoBehaviour {
 
         myClient.ReconnectToNewHost(rsp.ipAdress, rsp.port);
 
-        Debug.Log("切换到GameServer:" + rsp.ipAdress + "  " + rsp.port);
+        Log.Instance.Info("切换到GameServer:" + rsp.ipAdress + "  " + rsp.port);
     }
 }

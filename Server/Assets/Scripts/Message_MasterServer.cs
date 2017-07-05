@@ -5,17 +5,7 @@ using UnityEngine.Networking;
 
 namespace Message_MasterServer
 {
-    public class Notify_T : MessageBase
-    {
-        public string s;
-
-        public override void Deserialize(NetworkReader reader)
-        {
-            s = reader.ReadString();
-        }
-    }
-
-    public class ConnectionGameServerNotify: MessageBase
+    public class ConnectionGameServerNotify : MessageBase
     {
         public string ipAdress;
         public int port;
@@ -27,7 +17,7 @@ namespace Message_MasterServer
         }
     }
 
-    public class MasterServerRsp :MessageBase
+    public class MasterServerRsp : MessageBase
     {
         public int type;
 
@@ -37,7 +27,7 @@ namespace Message_MasterServer
         }
     }
 
-    public class GameServerNotify: MessageBase
+    public class GameServerNotify : MessageBase
     {
         public int maxConnection;
         public int port;
@@ -49,13 +39,23 @@ namespace Message_MasterServer
         }
     }
 
-    public class PlayerOfflineNotify: MessageBase
+    public class PlayerOfflineNotify : MessageBase
     {
         public int playerConnId;
 
         public override void Deserialize(NetworkReader reader)
         {
             playerConnId = reader.ReadInt32();
+        }
+    }
+
+    public class GameServerOpenedNotify : MessageBase
+    {
+        public bool opened;
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            opened = reader.ReadBoolean();
         }
     }
 }
