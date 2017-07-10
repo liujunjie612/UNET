@@ -11,13 +11,15 @@ public class SqlLogin
     {
         Linq.CommandText = "SELECT PasswordAc FROM accountlist WHERE AccountName = '" + name + "'";
         MySqlDataReader Reader = Linq.ExecuteReader();
+
+        string psd = "";
         if(Reader.Read())
         {
-            return Reader.GetString(0);
+            psd = Reader.GetString(0);
         }
-        else
-        {
-            return null;
-        }
+        
+        Reader.Close();
+
+        return psd;
     }
 }

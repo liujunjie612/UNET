@@ -59,12 +59,21 @@ public class SqlServer : MonoBehaviour
 
     private void __onLoginReq(NetworkMessage msg)
     {
-        Login req = msg.ReadMessage<Login>();
+        LoginReq req = msg.ReadMessage<LoginReq>();
         Log.Instance.Info("收到玩家密码请求：" + req.name);
 
-        Login rsp = new Login();
-        rsp.name = req.name;
-        rsp.psd = SqlLogin.GetAccountPassword(req.name);
+        LoginRsp rsp = new LoginRsp();
+        string psd = SqlLogin.GetAccountPassword(req.name);
+        if (string.IsNullOrEmpty(psd) || !psd.Equals(req.psd))
+        {
+            rsp.error = "昵称或密码错误";
+        }
+        else
+        {
+            rsp.error = "";
+        }
+        rsp.connId = req.connId; 
         NetworkServer.SendToClient(msg.conn.connectionId, MessageType.LoginRsp, rsp);
+        Log.Instance.Info("回复玩家密码请求：" + rsp.error);
     }
 }

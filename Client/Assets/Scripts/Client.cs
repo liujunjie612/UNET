@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 public class Client : MonoBehaviour {
     public GameObject loadingImg;
@@ -16,8 +17,10 @@ public class Client : MonoBehaviour {
 
     private int _connectTimes = 0;
 
-    void Start()
+    void Awake()
     {
+        DontDestroyOnLoad(this.gameObject);
+
         loadingImg.SetActive(true);
 
         connect();
@@ -50,7 +53,7 @@ public class Client : MonoBehaviour {
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.D))
+        if (Input.GetKeyDown(KeyCode.F1))
         {
             Notify_T n = new Notify_T();
             n.s = "Liu";
@@ -71,7 +74,10 @@ public class Client : MonoBehaviour {
 
         _connectTimes++;
         if (_connectTimes > 1)
+        {
             loadingImg.SetActive(false);
+            SceneManager.LoadScene(1);
+        }
     }
 
     private void __onDisconn(NetworkMessage msg)

@@ -65,21 +65,43 @@ namespace Message_GameServer
         }
     }
 
-    public class Login : MessageBase 
+    public class LoginReq : MessageBase 
     {
         public string name;
         public string psd;
+
+        public int connId;
 
         public override void Serialize(NetworkWriter writer)
         {
             writer.Write(name);
             writer.Write(psd);
+
+            writer.Write(connId);
         }
 
         public override void Deserialize(NetworkReader reader)
         {
             name = reader.ReadString();
             psd = reader.ReadString();
+        }
+    }
+
+    public class LoginRsp : MessageBase
+    {
+        public string error;
+
+        public int connId;
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(error);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            error = reader.ReadString();
+            connId = reader.ReadInt32();
         }
     }
 }

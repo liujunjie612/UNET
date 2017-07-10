@@ -41,4 +41,26 @@ namespace Message_Client
             writer.Write(type);
         }
     }
+
+    public class LoginReq : MessageBase
+    {
+        public string name;
+        public string psd;
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(name);
+            writer.Write(psd);
+        }
+    }
+
+    public class LoginRsp : MessageBase
+    {
+        public string error;
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            error = reader.ReadString();
+        }
+    }
 }

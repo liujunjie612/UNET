@@ -14,4 +14,7 @@ public class MessageType
     public const short PlayerOfflineNotify = 104;
 
     public const short GameServerOpenedNotify = 105;
+
+    public const short LoginReq = 106;
+    public const short LoginRsp = 107;
 }

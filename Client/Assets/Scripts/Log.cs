@@ -11,6 +11,8 @@ public class Log : Singleton<Log>
 
     void Start()
     {
+        DontDestroyOnLoad(this.gameObject);
+
         scrollbar.onValueChanged.AddListener(__onScrollbarValueCahnged);
         clearBtn.onClick.AddListener(this.__onClearClick);
     }

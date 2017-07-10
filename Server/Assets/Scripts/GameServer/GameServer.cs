@@ -31,20 +31,6 @@ public class GameServer : MonoBehaviour {
         registerHandler();
     }
 
-    //测试代码
-    void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.Y))
-        {
-            //测试代码
-            Login req = new Login();
-            req.name = "test01";
-            req.psd = "ttt";
-            mySqlClient.Send(MessageType.LoginReq, req);
-            Log.Instance.Info("获取玩家test01密码");
-        }
-    }
-
     private void connectMasterServer()
     {
         ConnectionConfig conf = new ConnectionConfig();
@@ -104,6 +90,8 @@ public class GameServer : MonoBehaviour {
             NetworkServer.RegisterHandler(MessageType.MasterServerRsp, __onMasterServerRsp);
             NetworkServer.RegisterHandler(MsgType.Disconnect, __onDisconn);
 
+            NetworkServer.RegisterHandler(MessageType.LoginReq, __onLoginReq);
+
             NetworkServer.RegisterHandler(MessageType.T, __onT);
         }
         Log.Instance.Info("服务器已开启");
@@ -130,11 +118,19 @@ public class GameServer : MonoBehaviour {
         Log.Instance.Info("connect sqlServer successful");
     }
 
+    private void __onLoginReq(NetworkMessage msg)
+    {
+        LoginReq req = msg.ReadMessage<LoginReq>();
+
+        req.connId = msg.conn.connectionId;
+        mySqlClient.Send(MessageType.LoginReq, req);
+    }
+
     private void __onLoginRsp(NetworkMessage msg)
     {
-        Login rsp = msg.ReadMessage<Login>();
+        LoginRsp rsp = msg.ReadMessage<LoginRsp>();
 
-        Log.Instance.Info("玩家 " + rsp.name + " 的密码是：" + rsp.psd);
+        NetworkServer.SendToClient(rsp.connId,MessageType.LoginRsp, rsp);
     }
 
     private void __onConn(NetworkMessage msg)
