@@ -44,8 +44,8 @@ public class Client : MonoBehaviour {
         myClient.RegisterHandler(MsgType.Connect, __onConn);
         myClient.RegisterHandler(MsgType.Disconnect, __onDisconn);
 
-        myClient.RegisterHandler(MessageType_Client.ConnectToGameServer, __onConnectionToGameServer);
-        myClient.RegisterHandler(MessageType_Client.T, __onT);
+        myClient.RegisterHandler(MessageType.ConnectionGameServerNotify, __onConnectionToGameServer);
+        myClient.RegisterHandler(MessageType.T, __onT);
     }
 
     void Update()
@@ -54,7 +54,7 @@ public class Client : MonoBehaviour {
         {
             Notify_T n = new Notify_T();
             n.s = "Liu";
-            conn.Send(MessageType_Client.T, n);
+            conn.Send(MessageType.T, n);
 
             Log.Instance.Info("send Liu");
         }
@@ -66,7 +66,7 @@ public class Client : MonoBehaviour {
         Log.Instance.Info("connected successful");
 
         MasterServerRsp rsp = new MasterServerRsp();
-        myClient.Send(MessageType_Client.MasterServerRsp, rsp);
+        myClient.Send(MessageType.MasterServerRsp, rsp);
         Log.Instance.Info("send MasterServerRsp");
 
         _connectTimes++;

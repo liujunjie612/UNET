@@ -11,6 +11,12 @@ public class MasterServer : MonoBehaviour
     public InputField portInput;
     public Button startServerBtn;
 
+    //连接数据库
+    public static NetworkConnection sqlConn;
+    private NetworkClient mySqlClient;
+    private string _sqlServerIPAdress = "127.0.0.1";
+    private int _sqlServerPort = 4000;
+
 
     private int _maxConnection = 100;
     private int _port = 3000;
@@ -27,6 +33,10 @@ public class MasterServer : MonoBehaviour
     {
         maxConnectionInput.text = _maxConnection.ToString();
         portInput.text = _port.ToString();
+
+        //连接数据库
+        connectSqlServer();
+        registerHandler();
 
         startServerBtn.onClick.AddListener(this.startServer);
         maxConnectionInput.onValueChanged.AddListener(this.__onMaxConnectionInputChanged);
@@ -52,12 +62,42 @@ public class MasterServer : MonoBehaviour
             NetworkServer.RegisterHandler(MsgType.Connect, __onConn);
             NetworkServer.RegisterHandler(MsgType.Disconnect, __onDisconn);
 
-            NetworkServer.RegisterHandler(MessageType_MasterServer.MasterServerRsp, __onMasterServerRsp);
-            NetworkServer.RegisterHandler(MessageType_MasterServer.PlayerOfflineNotify, __onPlayerOfflineNotify);
-            NetworkServer.RegisterHandler(MessageType_MasterServer.GameServerOpenedNotify, __onGameServerOpenedNotify);
+            NetworkServer.RegisterHandler(MessageType.MasterServerRsp, __onMasterServerRsp);
+            NetworkServer.RegisterHandler(MessageType.PlayerOfflineNotify, __onPlayerOfflineNotify);
+            NetworkServer.RegisterHandler(MessageType.GameServerOpenedNotify, __onGameServerOpenedNotify);
         }
         Log.Instance.Info("服务器已开启");
                 
+    }
+
+    /// <summary>
+    /// 连接数据库
+    /// </summary>
+    private void connectSqlServer()
+    {
+        ConnectionConfig conf = new ConnectionConfig();
+        conf.AddChannel(QosType.Reliable);
+        conf.AddChannel(QosType.Unreliable);
+        mySqlClient = new NetworkClient();
+        mySqlClient.Configure(conf, 1);
+
+        mySqlClient.Connect(_sqlServerIPAdress, _sqlServerPort);
+
+        Log.Instance.Info("send sqlServer connect");
+    }
+
+    /// <summary>
+    /// 注册监听事件
+    /// </summary>
+    private void registerHandler()
+    {
+        mySqlClient.RegisterHandler(MsgType.Connect, __onSqlConn);
+    }
+
+    private void __onSqlConn(NetworkMessage msg)
+    {
+        sqlConn = mySqlClient.connection;
+        Log.Instance.Info("connect sqlServer successful");
     }
 
     private void __onMaxConnectionInputChanged(string input)
@@ -76,7 +116,7 @@ public class MasterServer : MonoBehaviour
         notify.ipAdress = ipAdress;
         notify.port = port;
 
-        NetworkServer.SendToClient(cnn.connectionId, MessageType_MasterServer.ConnectionGameServerNotify, notify);
+        NetworkServer.SendToClient(cnn.connectionId, MessageType.ConnectionGameServerNotify, notify);
     }
 
     IEnumerator handleCatchMsgList()
@@ -162,7 +202,7 @@ public class MasterServer : MonoBehaviour
             notify.maxConnection = 100;
             notify.port = _gameServerList.Count + 1000;
 
-            NetworkServer.SendToClient(msg.conn.connectionId, MessageType_MasterServer.GameServerNotify, notify);
+            NetworkServer.SendToClient(msg.conn.connectionId, MessageType.GameServerNotify, notify);
 
             Log.Instance.Info("开启服务器端口 port：" + notify.port);
 

@@ -12,3 +12,7 @@
 /Server/GameServer.exe
 /Client/Client.exe
 /Client/Client_Data
+/Server/SqlServer_Data
+/Server/SqlServer.exe
+/Server/MasterServer_Data
+/Server/MasterServer.exe

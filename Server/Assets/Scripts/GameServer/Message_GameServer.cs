@@ -64,4 +64,22 @@ namespace Message_GameServer
             writer.Write(opened);
         }
     }
+
+    public class Login : MessageBase 
+    {
+        public string name;
+        public string psd;
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(name);
+            writer.Write(psd);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            name = reader.ReadString();
+            psd = reader.ReadString();
+        }
+    }
 }

@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MessageType_GameServer
+public class MessageType
 {
     public const short T = 100;
+
+    public const short ConnectionGameServerNotify = 101;
 
     public const short MasterServerRsp = 102;
     public const short GameServerNotify = 103;
@@ -12,5 +14,7 @@ public class MessageType_GameServer
     public const short PlayerOfflineNotify = 104;
 
     public const short GameServerOpenedNotify = 105;
-	
+
+    public const short LoginReq = 106;
+    public const short LoginRsp = 107;
 }

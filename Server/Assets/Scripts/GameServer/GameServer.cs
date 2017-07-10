@@ -6,42 +6,80 @@ using UnityEngine.Networking;
 
 public class GameServer : MonoBehaviour {
 
-    public static NetworkConnection conn;
+    public static NetworkConnection masterConn;
 
-    private const int Max_Connection = 100;
-    private NetworkClient myClient;
-    private string IPAdress = "127.0.0.1";
-    private int Port = 3000;
+    private const int _max_Connection = 100;
+    private NetworkClient myMasterClient;
+    private string _masterServerIPAdress = "127.0.0.1";
+    private int _masterServerPort = 3000;
+
+
+    public static NetworkConnection sqlConn;
+
+    private NetworkClient mySqlClient;
+    private string _sqlServerIPAdress = "127.0.0.1";
+    private int _sqlServerPort = 4000;
 
     private int _playerCount = 0;
 
     void Start()
     {
-        connect();
+        connectMasterServer();
+
+        connectSqlServer();
 
         registerHandler();
     }
 
-    private void connect()
+    //测试代码
+    void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.Y))
+        {
+            //测试代码
+            Login req = new Login();
+            req.name = "test01";
+            req.psd = "ttt";
+            mySqlClient.Send(MessageType.LoginReq, req);
+            Log.Instance.Info("获取玩家test01密码");
+        }
+    }
+
+    private void connectMasterServer()
     {
         ConnectionConfig conf = new ConnectionConfig();
         conf.AddChannel(QosType.Reliable);
         conf.AddChannel(QosType.Unreliable);
-        myClient = new NetworkClient();
-        myClient.Configure(conf, 1);
+        myMasterClient = new NetworkClient();
+        myMasterClient.Configure(conf, 1);
 
-        myClient.Connect(IPAdress, Port);
+        myMasterClient.Connect(_masterServerIPAdress, _masterServerPort);
 
-        Log.Instance.Info("send connect");
+        Log.Instance.Info("send masterServer connect");
     }
 
+
+    private void connectSqlServer()
+    {
+        ConnectionConfig conf = new ConnectionConfig();
+        conf.AddChannel(QosType.Reliable);
+        conf.AddChannel(QosType.Unreliable);
+        mySqlClient = new NetworkClient();
+        mySqlClient.Configure(conf, 1);
+
+        mySqlClient.Connect(_sqlServerIPAdress, _sqlServerPort);
+
+        Log.Instance.Info("send sqlServer connect");
+    }
     
 
     private void registerHandler()
     {
-        myClient.RegisterHandler(MsgType.Connect, __onMasterConn);
-        myClient.RegisterHandler(MessageType_GameServer.GameServerNotify, __onStartServer);
+        myMasterClient.RegisterHandler(MsgType.Connect, __onMasterConn);
+        myMasterClient.RegisterHandler(MessageType.GameServerNotify, __onStartServer);
 
+        mySqlClient.RegisterHandler(MsgType.Connect, __onSqlConn);
+        mySqlClient.RegisterHandler(MessageType.LoginRsp, __onLoginRsp);
     }
 
     private void __onStartServer(NetworkMessage msg)
@@ -63,27 +101,40 @@ public class GameServer : MonoBehaviour {
         if (NetworkServer.Listen(notify.port))
         {
             NetworkServer.RegisterHandler(MsgType.Connect, __onConn);
-            NetworkServer.RegisterHandler(MessageType_GameServer.MasterServerRsp, __onMasterServerRsp);
+            NetworkServer.RegisterHandler(MessageType.MasterServerRsp, __onMasterServerRsp);
             NetworkServer.RegisterHandler(MsgType.Disconnect, __onDisconn);
 
-            NetworkServer.RegisterHandler(MessageType_GameServer.T, __onT);
+            NetworkServer.RegisterHandler(MessageType.T, __onT);
         }
         Log.Instance.Info("服务器已开启");
 
         GameServerOpenedNotify n = new GameServerOpenedNotify();
-        myClient.Send(MessageType_GameServer.GameServerOpenedNotify, n);
+        myMasterClient.Send(MessageType.GameServerOpenedNotify, n);
         Log.Instance.Info("发送服务器已开启通知");
     }
 
     private void __onMasterConn(NetworkMessage msg)
     {
-        conn = myClient.connection;
-        Log.Instance.Info("connect successful");
+        masterConn = myMasterClient.connection;
+        Log.Instance.Info("connect masterServer successful");
 
         MasterServerRsp rsp = new MasterServerRsp();
 
-        myClient.Send(MessageType_GameServer.MasterServerRsp, rsp);
+        myMasterClient.Send(MessageType.MasterServerRsp, rsp);
         Log.Instance.Info("send MasterServerRsp");
+    }
+
+    private void __onSqlConn(NetworkMessage msg)
+    {
+        sqlConn = mySqlClient.connection;
+        Log.Instance.Info("connect sqlServer successful");
+    }
+
+    private void __onLoginRsp(NetworkMessage msg)
+    {
+        Login rsp = msg.ReadMessage<Login>();
+
+        Log.Instance.Info("玩家 " + rsp.name + " 的密码是：" + rsp.psd);
     }
 
     private void __onConn(NetworkMessage msg)
@@ -98,7 +149,7 @@ public class GameServer : MonoBehaviour {
         //玩家下线通知MasterServer，更新GameServer人数
         PlayerOfflineNotify notify = new PlayerOfflineNotify();
         notify.playerConnId = msg.conn.connectionId;
-        myClient.Send(MessageType_GameServer.PlayerOfflineNotify, notify);
+        myMasterClient.Send(MessageType.PlayerOfflineNotify, notify);
         _playerCount--;
 
         Log.Instance.Info("玩家：" + msg.conn + "下线，剩余在线玩家数：" + _playerCount);
@@ -120,7 +171,7 @@ public class GameServer : MonoBehaviour {
 
         Notify_T t = new Notify_T();
         t.s = "junjie cool";
-        NetworkServer.SendToClient(msg.conn.connectionId, MessageType_GameServer.T, t);
+        NetworkServer.SendToClient(msg.conn.connectionId, MessageType.T, t);
         Log.Instance.Info("send to " + msg.conn.connectionId + " :" + t.s);
     }
 
@@ -133,6 +184,9 @@ public class GameServer : MonoBehaviour {
         yield return new WaitForSeconds(10);
 
         if (_playerCount <= 0)
+        {
+            myMasterClient.Disconnect();
             Application.Quit();
+        }
     }
 }

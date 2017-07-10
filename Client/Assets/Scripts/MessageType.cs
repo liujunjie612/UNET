@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MessageType_MasterServer
+public class MessageType
 {
+    public const short T = 100;
+
     public const short ConnectionGameServerNotify = 101;
 
     public const short MasterServerRsp = 102;
