@@ -47,6 +47,11 @@ public class LoginUI : MonoBehaviour {
         {
             errorTxt.gameObject.SetActive(false);
             Log.Instance.Info("登录Ok");
+
+            MasterServerRsp r = new MasterServerRsp();
+            Client.conn.Send(MessageType.MasterServerRsp, r);
+            Client.loadingObj.SetActive(true);
+            Log.Instance.Info("send MasterServerRsp");
         }
         else
         {

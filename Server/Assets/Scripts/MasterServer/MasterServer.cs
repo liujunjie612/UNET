@@ -65,6 +65,8 @@ public class MasterServer : MonoBehaviour
             NetworkServer.RegisterHandler(MessageType.MasterServerRsp, __onMasterServerRsp);
             NetworkServer.RegisterHandler(MessageType.PlayerOfflineNotify, __onPlayerOfflineNotify);
             NetworkServer.RegisterHandler(MessageType.GameServerOpenedNotify, __onGameServerOpenedNotify);
+
+            NetworkServer.RegisterHandler(MessageType.LoginReq, __onLoginReq);
         }
         Log.Instance.Info("服务器已开启");
                 
@@ -92,6 +94,7 @@ public class MasterServer : MonoBehaviour
     private void registerHandler()
     {
         mySqlClient.RegisterHandler(MsgType.Connect, __onSqlConn);
+        mySqlClient.RegisterHandler(MessageType.LoginRsp, __onLoginRsp);
     }
 
     private void __onSqlConn(NetworkMessage msg)
@@ -255,5 +258,20 @@ public class MasterServer : MonoBehaviour
         GameServerOpenedNotify notify = msg.ReadMessage<GameServerOpenedNotify>();
         Log.Instance.Info("服务器已开启通知");
         StartCoroutine("handleCatchMsgList");
+    }
+
+    private void __onLoginReq(NetworkMessage msg)
+    {
+        LoginReq req = msg.ReadMessage<LoginReq>();
+        Log.Instance.Info("登录请求  connId:" + msg.conn.connectionId + "昵称：" + req.name + "  密码：" + req.psd);
+        req.connId = msg.conn.connectionId;
+        mySqlClient.Send(MessageType.LoginReq, req);
+    }
+
+    private void __onLoginRsp(NetworkMessage msg)
+    {
+        LoginRsp rsp = msg.ReadMessage<LoginRsp>();
+        Log.Instance.Info("校验登录结果：" + rsp.connId + " error:" + rsp.error);
+        NetworkServer.SendToClient(rsp.connId, MessageType.LoginRsp, rsp);
     }
 }

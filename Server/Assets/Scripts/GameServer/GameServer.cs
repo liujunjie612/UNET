@@ -65,7 +65,6 @@ public class GameServer : MonoBehaviour {
         myMasterClient.RegisterHandler(MessageType.GameServerNotify, __onStartServer);
 
         mySqlClient.RegisterHandler(MsgType.Connect, __onSqlConn);
-        mySqlClient.RegisterHandler(MessageType.LoginRsp, __onLoginRsp);
     }
 
     private void __onStartServer(NetworkMessage msg)
@@ -90,7 +89,6 @@ public class GameServer : MonoBehaviour {
             NetworkServer.RegisterHandler(MessageType.MasterServerRsp, __onMasterServerRsp);
             NetworkServer.RegisterHandler(MsgType.Disconnect, __onDisconn);
 
-            NetworkServer.RegisterHandler(MessageType.LoginReq, __onLoginReq);
 
             NetworkServer.RegisterHandler(MessageType.T, __onT);
         }
@@ -116,21 +114,6 @@ public class GameServer : MonoBehaviour {
     {
         sqlConn = mySqlClient.connection;
         Log.Instance.Info("connect sqlServer successful");
-    }
-
-    private void __onLoginReq(NetworkMessage msg)
-    {
-        LoginReq req = msg.ReadMessage<LoginReq>();
-
-        req.connId = msg.conn.connectionId;
-        mySqlClient.Send(MessageType.LoginReq, req);
-    }
-
-    private void __onLoginRsp(NetworkMessage msg)
-    {
-        LoginRsp rsp = msg.ReadMessage<LoginRsp>();
-
-        NetworkServer.SendToClient(rsp.connId,MessageType.LoginRsp, rsp);
     }
 
     private void __onConn(NetworkMessage msg)

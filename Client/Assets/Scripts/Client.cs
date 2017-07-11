@@ -7,8 +7,9 @@ using UnityEngine.SceneManagement;
 
 public class Client : MonoBehaviour {
     public GameObject loadingImg;
+    public static GameObject loadingObj;
 
-    public static NetworkConnection conn;
+    public static NetworkConnection conn = new NetworkConnection ();
 
     private const int Max_Connection = 100;
     private NetworkClient myClient;
@@ -20,12 +21,15 @@ public class Client : MonoBehaviour {
     void Awake()
     {
         DontDestroyOnLoad(this.gameObject);
+        DontDestroyOnLoad(loadingImg);
 
         loadingImg.SetActive(true);
 
         connect();
 
         registerHandler();
+
+        loadingObj = loadingImg;
     }
 
     private void connect()
@@ -68,16 +72,24 @@ public class Client : MonoBehaviour {
         conn = myClient.connection;
         Log.Instance.Info("connected successful");
 
-        MasterServerRsp rsp = new MasterServerRsp();
-        myClient.Send(MessageType.MasterServerRsp, rsp);
-        Log.Instance.Info("send MasterServerRsp");
+        loadingImg.SetActive(false);
 
-        _connectTimes++;
-        if (_connectTimes > 1)
+        //MasterServerRsp rsp = new MasterServerRsp();
+        //myClient.Send(MessageType.MasterServerRsp, rsp);
+        //Log.Instance.Info("send MasterServerRsp");
+
+        
+        if (_connectTimes == 0)
         {
             loadingImg.SetActive(false);
             SceneManager.LoadScene(1);
         }
+        else
+        {
+            loadingImg.SetActive(false);
+            SceneManager.LoadScene(2);
+        }
+        _connectTimes++;
     }
 
     private void __onDisconn(NetworkMessage msg)
